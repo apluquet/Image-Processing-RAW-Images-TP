@@ -1,7 +1,19 @@
+/**
+ * @file image.h
+ * @author Adèle PLUQUET and Adrien ANTON LUDWIG
+ * @brief Image class
+ * @version 0.1
+ * @date 2022-03-25
+ *
+ * @copyright Copyright (c) 2022
+ *
+ */
+
 #pragma once
 
 #include <stdlib.h>
 
+#include <algorithm>
 #include <cmath>
 #include <fstream>
 #include <iostream>
@@ -24,7 +36,7 @@ class Image {
  public:
   Image(int width, int height, const std::string &path)
       : width(width), height(height) {
-    data = (double *)malloc(width * height * sizeof(double));
+    data = reinterpret_cast<double *>(malloc(width * height * sizeof(double)));
     readRaw(path, data);
     blackPointDetection();
   }
