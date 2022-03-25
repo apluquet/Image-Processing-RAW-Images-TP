@@ -2,6 +2,7 @@
 
 #include <stdlib.h>
 
+#include <cmath>
 #include <fstream>
 #include <iostream>
 #include <string>
@@ -25,6 +26,7 @@ class Image {
       : width(width), height(height) {
     data = (double *)malloc(width * height * sizeof(double));
     readRaw(path, data);
+    blackPointDetection();
   }
 
   ~Image() { free(data); }
@@ -46,6 +48,43 @@ class Image {
     }
     std::cout << "compteur : " << data_cpt << std::endl;
     fclose(fp);
+  }
+
+  void blackPointDetection() {
+    double min_r = INFINITY;
+    double min_g = INFINITY;
+    double min_b = INFINITY;
+
+    // RED GET MIN
+    for (int i = 1; i < height; i += 2)
+      for (int j = 1; j < width; j += 2)
+        min_r = std::min(min_r, data[i * width + j]);
+
+    // GREEN GET MIN
+    for (int i = 1; i < height; i += 1)
+      for (int j = i % 2 + 1; j < width; j += 2)
+        min_g = std::min(min_g, data[i * width + j]);
+
+    // BLUE GET MIN
+    for (int i = 0; i < height; i += 2)
+      for (int j = 0; j < width; j += 2)
+        min_b = std::min(min_b, data[i * width + j]);
+
+    std::cout << "red min = " << min_r << std::endl;
+    std::cout << "green min = " << min_g << std::endl;
+    std::cout << "blue min = " << min_b << std::endl;
+
+    // RED SET
+    for (int i = 1; i < height; i += 2)
+      for (int j = 1; j < width; j += 2) data[i * width + j] -= min_r;
+
+    // GREEN SET
+    for (int i = 1; i < height; i += 1)
+      for (int j = i % 2 + 1; j < width; j += 2) data[i * width + j] -= min_g;
+
+    // BLUE SET
+    for (int i = 0; i < height; i += 2)
+      for (int j = 0; j < width; j += 2) data[i * width + j] -= min_b;
   }
 
  public:

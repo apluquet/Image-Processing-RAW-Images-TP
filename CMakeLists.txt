@@ -15,7 +15,7 @@ set(SRCS
     )
     
 set(HEADERS
-    src/decode.h
+    src/image.h
     )
 
 add_compile_options(-g)
