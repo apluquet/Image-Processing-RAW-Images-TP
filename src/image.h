@@ -54,7 +54,9 @@ class Image {
       if (feof(fp)) break;
 
       if (data_cpt >= width * height - 4)
-        data[data_cpt++] = (pixels.v1 << 2) + pixels.v5.a1;
+        throw std::invalid_argument("Data cpt is to big\n");
+
+      data[data_cpt++] = (pixels.v1 << 2) + pixels.v5.a1;
       data[data_cpt++] = (pixels.v2 << 2) + pixels.v5.a2;
       data[data_cpt++] = (pixels.v3 << 2) + pixels.v5.a3;
       data[data_cpt++] = (pixels.v4 << 2) + pixels.v5.a4;
