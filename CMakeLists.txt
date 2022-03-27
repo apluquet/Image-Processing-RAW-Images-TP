@@ -12,6 +12,7 @@ include_directories(${CMAKE_SOURCE_DIR})
 # Crée des variables avec les fichiers à compiler
 set(SRCS
     main.cpp
+    src/image.cpp
     )
     
 set(HEADERS
