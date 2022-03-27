@@ -11,6 +11,8 @@
 
 #include "src/image.h"
 
+#include <fstream>
+
 void Image::readRaw(const std::string &path, double *data) {
   struct pixels pixels;
   FILE *fp;
@@ -44,8 +46,8 @@ void Image::blackPointDetection() {
       min_r = std::min(min_r, data[i * width + j]);
 
   // GREEN GET MIN
-  for (int i = 1; i < height; i += 1)
-    for (int j = i % 2 + 1; j < width; j += 2)
+  for (int i = 0; i < height; i += 1)
+    for (int j = (i + 1) % 2; j < width; j += 2)
       min_g = std::min(min_g, data[i * width + j]);
 
   // BLUE GET MIN
@@ -62,10 +64,131 @@ void Image::blackPointDetection() {
     for (int j = 1; j < width; j += 2) data[i * width + j] -= min_r;
 
   // GREEN SET
-  for (int i = 1; i < height; i += 1)
-    for (int j = i % 2 + 1; j < width; j += 2) data[i * width + j] -= min_g;
+  for (int i = 0; i < height; i += 1)
+    for (int j = (i + 1) % 2; j < width; j += 2) data[i * width + j] -= min_g;
 
   // BLUE SET
   for (int i = 0; i < height; i += 2)
     for (int j = 0; j < width; j += 2) data[i * width + j] -= min_b;
+}
+
+double Image::getCross(int i, int j) {
+  double mean = 0;
+  int cpt = 0;
+  if (i > 0) {
+    mean += data[(i - 1) * width + j];
+    cpt++;
+  }
+  if (i < height - 1) {
+    mean += data[(i + 1) * width + j];
+    cpt++;
+  }
+  if (j > 0) {
+    mean += data[i * width + j - 1];
+    cpt++;
+  }
+  if (j < width - 1) {
+    mean += data[i * width + j + 1];
+    cpt++;
+  }
+  return mean / cpt;
+}
+
+double Image::getDiag(int i, int j) {
+  double mean = 0;
+  int cpt = 0;
+
+  if (i > 0 && j > 0) {
+    mean += data[(i - 1) * width + j - 1];
+    cpt++;
+  }
+  if (i < height - 1 && j > 0) {
+    mean += data[(i + 1) * width + j - 1];
+    cpt++;
+  }
+  if (i > 0 && j < width - 1) {
+    mean += data[(i - 1) * width + j + 1];
+    cpt++;
+  }
+  if (i < height - 1 && j < width - 1) {
+    mean += data[(i + 1) * width + j + 1];
+    cpt++;
+  }
+  return mean / cpt;
+}
+
+double Image::getLine(int i, int j) {
+  double mean = 0;
+  int cpt = 0;
+  if (i > 0) {
+    mean += data[(i - 1) * width + j];
+    cpt++;
+  }
+  if (i < height - 1) {
+    mean += data[(i + 1) * width + j];
+    cpt++;
+  }
+  return mean / cpt;
+}
+
+double Image::getCol(int i, int j) {
+  double mean = 0;
+  int cpt = 0;
+
+  if (j > 0) {
+    mean += data[i * width + j - 1];
+    cpt++;
+  }
+  if (j < width - 1) {
+    mean += data[i * width + j + 1];
+    cpt++;
+  }
+  return mean / cpt;
+}
+
+void Image::demosaicing() {
+  // RED
+  for (int i = 1; i < height - 1; i += 2)
+    for (int j = 1; j < width - 1; j += 2) {
+      r[i * width + j] = data[i * width + j];
+      g[i * width + j] = getCross(i, j);
+      b[i * width + j] = getDiag(i, j);
+    }
+
+  // GREEN
+  for (int i = 0; i < height - 1; i += 1)
+    for (int j = (i + 1) % 2; j < width - 1; j += 2) {
+      g[i * width + j] = data[i * width + j];
+      if (i % 2) {
+        r[i * width + j] = getLine(i, j);
+        b[i * width + j] = getCol(i, j);
+      } else {
+        r[i * width + j] = getCol(i, j);
+        b[i * width + j] = getLine(i, j);
+      }
+    }
+
+  // BLUE
+  for (int i = 0; i < height - 1; i += 2)
+    for (int j = 0; j < width - 1; j += 2) {
+      r[i * width + j] = getDiag(i, j);
+      g[i * width + j] = getCross(i, j);
+      b[i * width + j] = data[i * width + j];
+    }
+}
+
+void Image::toPpm() {
+  {
+    std::ofstream ofs("mySuperImage.ppm", std::ofstream::out);
+    ofs << "P3 " << width << " " << height << " 255" << std::endl;
+    for (std::size_t i = 0; i < height; i++) {
+      for (std::size_t j = 0; j < width; j++)
+        ofs << static_cast<int>((r[i * width + j] / maxR) * 255) << " "
+            << static_cast<int>((g[i * width + j] / maxG) * 255) << " "
+            << static_cast<int>((b[i * width + j] / maxB) * 255) << " ";
+      ofs << std::endl;
+    }
+    ofs.close();
+  }
+  std::cout << "Write image : success !" << std::endl;
 }
