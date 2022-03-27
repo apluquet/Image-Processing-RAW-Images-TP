@@ -53,8 +53,8 @@ class Image {
       fread(&pixels, sizeof(pixels), 1, fp);
       if (feof(fp)) break;
 
-      if (data_cpt >= width * height - 4)
-        throw std::invalid_argument("Data cpt is to big\n");
+      if (data_cpt >= width * height - 3)
+        throw std::invalid_argument("Data cpt is too big\n");
 
       data[data_cpt++] = (pixels.v1 << 2) + pixels.v5.a1;
       data[data_cpt++] = (pixels.v2 << 2) + pixels.v5.a2;
